@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Proposiciones Lógicas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .engine-selector {
+            display: flex;
+            justify-content: space-between;
+            background-color: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .engine-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .engine-option.active {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        .truth-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .truth-table th,
+        .truth-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .truth-table th {
+            background-color: #f2f2f2;
+        }
+
+        .truth-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .help {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        #propFormalized {
+            font-family: monospace;
+            font-size: 18px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+            min-height: 60px;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+        }
+
+        #truthTableSection {
+            display: none;
+            /* Oculto por defecto */
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            padding: 10px;
+            background-color: #fadbd8;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Analizador de Proposiciones Lógicas</h1>
+
+    <div class="panel full-width">
+        <h2>Selecciona el Engine</h2>
+        <div class="engine-selector">
+            <div class="engine-option active" data-engine="standard">
+                Engine Estándar
+            </div>
+            <div class="engine-option" data-engine="ai">
+                Engine con IA
+            </div>
+        </div>
+        <p class="help" id="engineDescription">
+            Engine Estándar: Utiliza reglas predefinidas para análisis básico de proposiciones simples.
+        </p>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Entrada</h2>
+            <p class="help">Escribe una proposición en lenguaje natural</p>
+            <textarea id="naturalLanguage" rows="4"
+                placeholder="Ejemplo: Si llueve, entonces la cancha está mojada"></textarea>
+
+            <button id="analyzeBtn">Analizar Proposición</button>
+            <div class="loading" id="loadingIndicator">
+                <p>Procesando...</p>
+            </div>
+            <div id="errorMessage" class="error-message">
+                Error al procesar la solicitud. Intente nuevamente.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Resultado: Lenguaje Proposicional</h2>
+            <div id="propFormalized">
+                El resultado aparecerá aquí
+            </div>
+
+            <h3>Variables identificadas</h3>
+            <div id="variables">-</div>
+        </div>
+
+        <div class="panel full-width" id="truthTableSection">
+            <h2>Tabla de Verdad</h2>
+            <div id="truthTableContainer">
+                <!-- La tabla se generará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentEngine = 'standard';
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function () {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Botón de análisis
+            document.getElementById('analyzeBtn').addEventListener('click', handleAnalyzeClick);
+
+            // Cambiar entre engines
+            document.querySelectorAll('.engine-option').forEach(function (option) {
+                option.addEventListener('click', function () {
+                    setActiveEngine(this.getAttribute('data-engine'));
+                });
+            });
+        }
+
+        function setActiveEngine(engine) {
+            currentEngine = engine;
+            document.querySelectorAll('.engine-option').forEach(function (opt) {
+                opt.classList.remove('active');
+            });
+            document.querySelector(`.engine-option[data-engine="${engine}"]`).classList.add('active');
+
+            // Actualizar descripción del engine
+            const descriptions = {
+                'standard': 'Engine Estándar: Utiliza reglas predefinidas para análisis básico de proposiciones simples.',
+                'ai': 'Engine con IA: Utiliza procesamiento de lenguaje natural para analizar proposiciones complejas.'
+            };
+            document.getElementById('engineDescription').textContent = descriptions[engine];
+        }
+
+        async function handleAnalyzeClick() {
+            const inputText = document.getElementById('naturalLanguage').value.trim();
+            if (!inputText) {
+                alert('Por favor, introduce una proposición');
+                return;
+            }
+
+            // Mostrar indicador de carga y ocultar errores previos
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            try {
+                if (currentEngine === 'standard') {
+                    await processStandardEngine(inputText);
+                } else {
+                    processAIEngine(inputText);
+                }
+            } catch (error) {
+                console.error('Error al procesar:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        async function processStandardEngine(input) {
+            try {
+                // Codificar la proposición para la URL
+                const encodedProp = encodeURIComponent(input);
+                const url = `http://localhost:8000/analizar?prop=${encodedProp}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+
+                const data = await response.json();
+                displayStandardResults(data);
+            } catch (error) {
+                console.error('Error al llamar a la API:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent =
+                    'Error al comunicarse con el servidor. Verifique que el servidor esté en funcionamiento.';
+            }
+        }
+
+        function displayStandardResults(data) {
+            // Mostrar el símbolo lógico
+            if (data.análisis && data.análisis.symbol) {
+                // Extraer proposiciones
+                const props = data.análisis.propositions || [];
+                const symbol = data.análisis.symbol;
+                const negations = data.análisis.negations || [];
+
+                // Formatear las proposiciones con negaciones si corresponde
+                const formattedProps = props.map((prop, index) => {
+                    return negations[index] ? `¬${prop}` : prop;
+                });
+
+                // Construir la fórmula
+                let formula = '';
+                if (formattedProps.length === 2) {
+                    formula = `${formattedProps[0]} ${symbol} ${formattedProps[1]}`;
+                } else if (formattedProps.length === 1) {
+                    formula = `${symbol}${formattedProps[0]}`;
+                } else {
+                    formula = formattedProps.join(` ${symbol} `);
+                }
+
+                document.getElementById('propFormalized').textContent = formula;
+
+                // Mostrar variables
+                const variables = props.map((prop, index) => {
+                    // Usar la primera letra del abecedario + índice como variable
+                    const varName = String.fromCharCode(112 + index); // p, q, r, ...
+                    return `${varName}: ${prop}`;
+                });
+                document.getElementById('variables').textContent = variables.join(', ');
+            }
+
+            // Generar la tabla de verdad
+            if (data.tabla_verdad && data.tabla_verdad.length > 0) {
+                generateTruthTable(data.tabla_verdad);
+            }
+        }
+
+        function generateTruthTable(tableData) {
+            const container = document.getElementById('truthTableContainer');
+            container.innerHTML = '';
+
+            const table = document.createElement('table');
+            table.className = 'truth-table';
+
+            // Crear la tabla a partir de los datos
+            tableData.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+
+                row.forEach((cell) => {
+                    const cellElement = rowIndex === 0 ?
+                        document.createElement('th') :
+                        document.createElement('td');
+                    cellElement.textContent = cell;
+                    tr.appendChild(cellElement);
+                });
+
+                table.appendChild(tr);
+            });
+
+            container.appendChild(table);
+            document.getElementById('truthTableSection').style.display = 'block';
+        }
+
+        async function processAIEngine(input) {
+            // Mostrar el indicador de carga
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            try {
+                // Codificar la proposición para la URL
+                const encodedProp = encodeURIComponent(input);
+                const url = `http://localhost:8000/analizar_ai?prop=${encodedProp}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Mostrar la expresión lógica
+                    document.getElementById('propFormalized').textContent = data.expresion_original;
+
+                    // Mostrar las variables identificadas
+                    const variables = Object.keys(data.tabla_verdad[0]).filter(key => key !== 'resultado');
+                    const variablesText = variables.map((varName, index) => {
+                        return `${String.fromCharCode(112 + index)}: ${varName}`;
+                    }).join(', ');
+                    document.getElementById('variables').textContent = variablesText;
+
+                    // Generar la tabla de verdad
+                    const truthTable = generateAITruthTable(data.tabla_verdad, variables);
+                    generateTruthTable(truthTable);
+                } else {
+                    throw new Error('Error en el procesamiento de la IA');
+                }
+            } catch (error) {
+                console.error('Error al llamar a la API de IA:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent =
+                    'Error al comunicarse con el servidor de IA. Verifique que el servidor esté en funcionamiento.';
+            } finally {
+                // Ocultar el indicador de carga, independientemente de si la solicitud fue exitosa o no
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        function generateAITruthTable(tableData, variables) {
+            // Crear la cabecera de la tabla
+            const header = [...variables, 'Resultado'];
+            const truthTable = [header];
+
+            // Convertir los datos de la tabla de verdad
+            tableData.forEach(row => {
+                const newRow = variables.map(varName => row[varName] === 1 ? 'V' : 'F');
+                newRow.push(row.resultado === 1 ? 'V' : 'F');
+                truthTable.push(newRow);
+            });
+
+            return truthTable;
+        }
+    </script>
+</body>
+
+</html>

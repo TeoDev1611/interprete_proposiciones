@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Verdad Dinámica</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Tabla de Verdad Dinámica</h2>
+    <table id="tablaVerdad">
+        <thead>
+            <!-- Los encabezados se generarán dinámicamente con JavaScript -->
+        </thead>
+        <tbody>
+            <!-- Las filas se generarán dinámicamente con JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/'; // Cambiar por la URL real
+        const data = fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({prop: "Si llueve entonces se moja"})
+        }).then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+        const tabla = document.getElementById("tablaVerdad");
+        const thead = tabla.querySelector("thead");
+        const tbody = tabla.querySelector("tbody");
+
+        // Generar encabezados dinámicamente
+        const primeraFila = data.tabla_verdad[0];
+        const encabezados = Object.keys(primeraFila); // Obtener las claves del primer objeto
+
+        const trHead = document.createElement("tr");
+        encabezados.forEach(encabezado => {
+            const th = document.createElement("th");
+            th.textContent = encabezado.toUpperCase(); // Mostrar en mayúsculas
+            trHead.appendChild(th);
+        });
+        thead.appendChild(trHead);
+
+        // Generar filas dinámicamente
+        data.tabla_verdad.forEach(fila => {
+            const tr = document.createElement("tr");
+            encabezados.forEach(encabezado => {
+                const td = document.createElement("td");
+                td.textContent = fila[encabezado];
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    </script>
+
+</body>
+
+</html>

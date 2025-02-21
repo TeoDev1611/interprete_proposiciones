@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Tablas de Verdad</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4cb5ae;
+            --light-color: #dbe9ee;
+            --dark-color: #166088;
+            --true-color: #4cb5ae;
+            --false-color: #f6f6f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9fbfd;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .input-header h2 {
+            color: var(--secondary-color);
+            margin: 0;
+        }
+
+        .expression-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--light-color);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .symbol-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .symbol-btn {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-weight: bold;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .symbol-btn:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .examples {
+            margin-top: 10px;
+        }
+
+        .examples span {
+            display: inline-block;
+            background-color: var(--light-color);
+            padding: 6px 12px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .examples span:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .result-section {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-header h2 {
+            color: var(--secondary-color);
+            margin: 0;
+        }
+
+        .expression-display {
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--light-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .true-value {
+            background-color: var(--true-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .false-value {
+            background-color: var(--false-color);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            background-color: #fae5e5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .expression-input {
+                flex-direction: column;
+            }
+
+            .symbol-palette {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Generador de Tablas de Verdad</h1>
+
+    <div class="container">
+        <div class="input-section">
+            <div class="input-header">
+                <h2>Introduce una expresión para analizar</h2>
+            </div>
+
+            <div class="expression-input">
+                <input type="text" id="expression-input" placeholder="Ejemplo: Si llueve, entonces estará mojado.">
+                <button id="generate-btn">Generar Tabla</button>
+            </div>
+
+
+            <div class="examples">
+                <p>Ejemplos:</p>
+                <span class="example-expr">Si quieres, podemos salir.</span>
+                <span class="example-expr">No fui al parque porque estaba lloviendo, pero sí fui al cine.</span>
+                <span class="example-expr">Si termino mi trabajo temprano y el clima es agradable, entonces iré al cine
+                    con mis amigos; pero si llueve o surge un imprevisto, me quedaré en casa viendo una película.</span>
+                <span class="example-expr">Si haces ejercicio regularmente y comes saludable, te sentirás mejor y
+                    tendrás más energía.</span>
+            </div>
+
+            <div class="error-message" id="error-display"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generando tabla de verdad...</p>
+        </div>
+
+        <div class="result-section" id="result-section">
+            <div class="result-header">
+                <h2>Tabla de Verdad</h2>
+            </div>
+
+            <div class="expression-display" id="expression-display"></div>
+
+            <div id="table-container">
+                <table id="tablaVerdad">
+                    <thead>
+                        <!-- Los encabezados se generarán dinámicamente con JavaScript -->
+                    </thead>
+                    <tbody>
+                        <!-- Las filas se generarán dinámicamente con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const expressionInput = document.getElementById('expression-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const symbolButtons = document.querySelectorAll('.symbol-btn');
+            const exampleExpressions = document.querySelectorAll('.example-expr');
+            const resultSection = document.getElementById('result-section');
+            const expressionDisplay = document.getElementById('expression-display');
+            const tableContainer = document.getElementById('table-container');
+            const loadingElement = document.getElementById('loading');
+            const errorDisplay = document.getElementById('error-display');
+
+            // URL del API (cámbiala a la dirección real de tu API)
+            const API_URL = 'http://127.0.0.1:8000/'; // Cambiar por la URL real
+
+            // Agregar símbolo al input
+            symbolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const symbol = button.getAttribute('data-symbol');
+                    const cursorPos = expressionInput.selectionStart;
+                    const textBefore = expressionInput.value.substring(0, cursorPos);
+                    const textAfter = expressionInput.value.substring(cursorPos);
+
+                    expressionInput.value = textBefore + symbol + textAfter;
+                    expressionInput.focus();
+                    expressionInput.setSelectionRange(cursorPos + symbol.length, cursorPos + symbol.length);
+                });
+            });
+
+            // Cargar ejemplos
+            exampleExpressions.forEach(example => {
+                example.addEventListener('click', () => {
+                    expressionInput.value = example.textContent;
+                });
+            });
+
+            // Función principal para generar tabla
+            generateBtn.addEventListener('click', generateTruthTable);
+            expressionInput.addEventListener('keyup', function (event) {
+                if (event.key === 'Enter') {
+                    generateTruthTable();
+                }
+            });
+
+            function generateTruthTable() {
+                const tabla = document.getElementById("tablaVerdad");
+                const thead = tabla.querySelector("thead");
+                const tbody = tabla.querySelector("tbody");
+                const data = fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ expresion: expression })
+                }).then(response => response.json())
+                    .then(data => resolve(data))
+                    .catch(error => reject(error));
+                // Generar encabezados dinámicamente
+                const primeraFila = data.tabla_verdad[0];
+                const encabezados = Object.keys(primeraFila); // Obtener las claves del primer objeto
+
+                const trHead = document.createElement("tr");
+                encabezados.forEach(encabezado => {
+                    const th = document.createElement("th");
+                    th.textContent = encabezado.toUpperCase(); // Mostrar en mayúsculas
+                    trHead.appendChild(th);
+                });
+                thead.appendChild(trHead);
+
+                // Generar filas dinámicamente
+                data.tabla_verdad.forEach(fila => {
+                    const tr = document.createElement("tr");
+                    encabezados.forEach(encabezado => {
+                        const td = document.createElement("td");
+                        td.textContent = fila[encabezado];
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function showLoading(show) {
+                loadingElement.style.display = show ? 'block' : 'none';
+                if (show) {
+                    resultSection.style.display = 'none';
+                }
+            }
+
+            function showError(message) {
+                errorDisplay.textContent = message;
+                errorDisplay.style.display = 'block';
+                resultSection.style.display = 'none';
+            }
+
+            function hideError() {
+                errorDisplay.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
