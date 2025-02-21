@@ -1,0 +1,39 @@
+flowchart TD
+    A[Inicio] --> B[Inicialización de InterpreteLógico]
+    B --> C{Analizar proposición}
+    
+    C --> D[parse_proposition]
+    D --> E{¿Contiene conector?}
+    
+    E -->|No| F[check_negation]
+    F --> G[Retornar proposición simple]
+    
+    E -->|Sí| H[Identificar tipo de conector]
+    H --> I[Dividir por conector]
+    I --> J[check_negation para cada parte]
+    J --> K[Retornar estructura analizada]
+    
+    C --> L[generate_truth_table]
+    L --> M{¿Proposición válida?}
+    M -->|No| N[Retornar mensaje de error]
+    M -->|Sí| O[Generar combinaciones True/False]
+    O --> P[Evaluar cada combinación]
+    P --> Q[evaluate_expression]
+    Q --> R[Aplicar negaciones]
+    R --> S{Determinar operación lógica}
+    
+    S -->|Condicional| T1["return not p or q"]
+    S -->|Conjunción| T2["return p and q"]
+    S -->|Disyunción| T3["return p or q"]
+    S -->|Explicativo| T4["return p == q"]
+    
+    T1 --> U[Construir tabla]
+    T2 --> U
+    T3 --> U
+    T4 --> U
+    
+    U --> V[format_truth_table]
+    V --> W[Calcular anchos de columna]
+    W --> X[Formatear encabezados y filas]
+    X --> Y[Retornar tabla formateada]
+    Y --> Z[Fin]

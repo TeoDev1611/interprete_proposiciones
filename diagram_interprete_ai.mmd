@@ -1,0 +1,49 @@
+flowchart TD
+    A[Inicio] --> B[interpretar_proposicion_lenguaje_natural]
+    B --> C[Crear Cliente GEMINI]
+    C --> D[Llamar a API Gemini]
+    D --> E[Recibir respuesta]
+    E --> F[Retornar expresión lógica formal]
+    
+    A --> G[generar_tabla_verdad]
+    G --> H{Traducir operadores}
+    H --> I[Reemplazar ¬ por ~]
+    I --> J[Reemplazar ∧ por &]
+    J --> K[Reemplazar ∨ por pipe]
+    K --> L[Reemplazar → por >>]
+    L --> M[Reemplazar ↔ por ==]
+    
+    M --> N[Detectar símbolos proposicionales]
+    N --> O[Crear símbolos SymPy]
+    O --> P[Evaluar expresión]
+    P --> Q[Obtener símbolos ordenados]
+    
+    Q --> R[Generar combinaciones de valores]
+    R --> S[Iniciar iteración por combinación]
+    S --> T[Asignar valores de verdad]
+    T --> U[Evaluar expresión con valores]
+    U --> V[Convertir a booleano nativo]
+    V --> W[Crear fila para tabla]
+    W --> X{¿Última combinación?}
+    X -->|No| S
+    X -->|Sí| Y[Crear DataFrame]
+    
+    Y --> Z{Formato de salida}
+    Z -->|dataframe| AA[Retornar DataFrame]
+    Z -->|dict| AB[Convertir a diccionario]
+    Z -->|json| AC[Crear objeto JSON]
+    
+    AC --> AD[Añadir metadatos al JSON]
+    AD --> AE[Retornar JSON formateado]
+    AB --> AF[Retornar diccionario]
+    
+    Z -->|desconocido| AG[Lanzar error de formato]
+    
+    AA --> AH[Manejo de excepciones]
+    AE --> AH
+    AF --> AH
+    AG --> AH
+    
+    AH --> AI[Formatear mensaje de error]
+    AI --> AJ[Retornar error según formato]
+    AJ --> AK[Fin]
